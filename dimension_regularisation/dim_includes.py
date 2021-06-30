@@ -8,12 +8,13 @@ import os
 
 
 class PlotAlpha(keras.callbacks.Callback):
-    def __init__(self, output, x_train):
+    def __init__(self, output, x_train, batch_size=1000):
         output = Path(output)
         output.mkdir(parents=True, exist_ok=True)
         self.output = output / "data.csv"
         self.output2 = output / "alpha.csv"
         self.x_train = x_train
+        self.batch_size = batch_size
 
     def on_train_begin(self, logs={}):
         self.data = []
@@ -43,7 +44,7 @@ class PlotAlpha(keras.callbacks.Callback):
                     model2.add(layer)
             else:
                 break
-            eigen_values = model2(self.x_train).numpy()
+            eigen_values = model2(self.x_train[:self.batch_size]).numpy()
             eigen_values_list.append(eigen_values)
             self.alpha_data.extend([dict(epoch=epoch, name=name, value=x) for x in eigen_values])
         pd.DataFrame(self.data).to_csv(self.output, index=False)
@@ -70,7 +71,10 @@ def linear_fit(x_data, y_data):
 
 @tf.function
 def getAlpha(data):
-    eigen_values = getPCAVariance(data)
+    d = data#[..., 0]
+    d = tf.reshape(d, (d.shape[0], -1))
+    print(d.shape)
+    eigen_values = getPCAVariance(d)
 
     eigen_values = tf.nn.relu(eigen_values) + 1e-8
     y = tf.math.log(eigen_values)
@@ -107,7 +111,11 @@ class DimensionRegOutput(keras.layers.Layer):
         if x.shape[0] == None:
             return x
 
-        eigen_values = getPCAVariance(x)
+        d = x#[..., 0]
+        d = tf.reshape(d, (d.shape[0], -1))
+        #print(d.shape)
+
+        eigen_values = getPCAVariance(d)
 
         eigen_values = tf.nn.relu(eigen_values) + 1e-8
         return eigen_values
