@@ -10,10 +10,13 @@ parser.add_argument('--dataset', default="cifar10", type=str)
 parser.add_argument('--pca_reduce', default=0, type=int)
 parser.add_argument('--conv1', default=32, type=int)
 parser.add_argument('--reg1', default=0, type=float)
+parser.add_argument('--reg1value', default=1, type=float)
 parser.add_argument('--conv2', default=32, type=int)
 parser.add_argument('--reg2', default=0, type=float)
+parser.add_argument('--reg2value', default=1, type=float)
 parser.add_argument('--dense1', default=256, type=float)
 parser.add_argument('--reg3', default=0, type=float)
+parser.add_argument('--reg3value', default=1, type=float)
 parser.add_argument('--weight_share', default=False, type=bool)
 parser.add_argument('--output', default='logs', help='the output directory')
 args = parser.parse_args()
@@ -38,18 +41,18 @@ model = keras.models.Sequential([
     Conv2DNew(args.conv1, 3, weights_shared=True, activation='relu', kernel_initializer='he_uniform'),#, padding='same'),
 #    keras.layers.Conv2D(args.conv1, 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
     keras.layers.MaxPool2D(2),
-    DimensionReg(args.reg1, 1),
+    DimensionReg(args.reg1, args.reg1value),
     keras.layers.Dropout(0.5),
 
     Conv2DNew(args.conv2, 3, weights_shared=True, activation='relu', kernel_initializer='he_uniform'),#, padding='same'),
 #    keras.layers.Conv2D(args.conv2, 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
     keras.layers.MaxPool2D(2),
-    DimensionReg(args.reg2, 1),
+    DimensionReg(args.reg2, args.reg2value),
     keras.layers.Dropout(0.5),
 
     keras.layers.Flatten(),
     keras.layers.Dense(units=args.dense1, activation='relu'),
-    DimensionReg(args.reg3, 1),
+    DimensionReg(args.reg3, args.reg3value),
     keras.layers.Dense(units=num_classes, activation='softmax'),
 ])
 model.compile(optimizer='RMSprop', loss='categorical_crossentropy', metrics=['accuracy'])
