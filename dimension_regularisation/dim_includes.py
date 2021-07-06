@@ -86,10 +86,12 @@ def getAlpha(data):
 
 class DimensionReg(keras.layers.Layer):
 
-    def __init__(self, strength=0.01, target_value=1, metric_name="alpha", **kwargs):
+    def __init__(self, strength=0.01, target_value=1, metric_name=None, **kwargs):
         super().__init__(**kwargs)
         self.strength = strength
         self.target_value = target_value
+        if metric_name is None:
+            metric_name = self.name.replace("dimension_reg", "alpha")
         self.metric_name = metric_name
 
     def get_config(self):
