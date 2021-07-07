@@ -47,8 +47,22 @@ class PlotAlpha(keras.callbacks.Callback):
             eigen_values = model2(self.x_train[:self.batch_size]).numpy()
             eigen_values_list.append(eigen_values)
             self.alpha_data.extend([dict(epoch=epoch, name=name, value=x) for x in eigen_values])
-        pd.DataFrame(self.data).to_csv(self.output, index=False)
-        pd.DataFrame(self.alpha_data).to_csv(self.output2, index=False)
+        while True:
+            try:
+                pd.DataFrame(self.data).to_csv(self.output, index=False)
+            except FileNotFoundError as err:
+                print(err)
+                self.output.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                break
+        while True:
+            try:
+                pd.DataFrame(self.alpha_data).to_csv(self.output2, index=False)
+            except FileNotFoundError as err:
+                print(err)
+                self.output2.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                break
 
 
 @tf.function
