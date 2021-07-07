@@ -161,7 +161,7 @@ def getOutputPath(args):
     ]
     parts.extend([str(k) + "=" + str(v) for k, v in args._get_kwargs() if k != "output"])
 
-    output = Path(args.output) / (" ".join(parts))
+    output = Path(args.output("logs")) / (" ".join(parts))
     import yaml
     output.mkdir(parents=True, exist_ok=True)
     arguments = dict(datetime=parts[0], commit=parts[1], commitLong=getGitLongHash(), run_dir=os.getcwd())
@@ -170,3 +170,46 @@ def getOutputPath(args):
         yaml.dump(arguments, fp)
     print("OUTPUT_PATH=\""+str(output)+"\"")
     return output
+
+
+def get_parameter(parameter_name, default_value):
+    import sys
+    # parameter needs to have a default value
+    if default_value is None:
+        raise ValueError(f"No default value defined for {parameter_name}.")
+    # try to find the value in the sys args
+    for i, name in enumerate(sys.argv[:-1]):
+        # did we find it? cast to desired value
+        if name == "--"+parameter_name:
+            return type(default_value)(sys.argv[i+1])
+    # if not return default
+    return default_value
+
+all_parameters = {}
+def parameters(name, default_value):
+    all_parameters[name] = get_parameter(name, default_value)
+    return all_parameters[name]
+
+class CommandLineParameters:
+    all_parameters = {}
+
+    def parameters(self, name, default_value=None):
+        if name in self.all_parameters:
+            if default_value is not None:
+                raise ValueError(f"Default value for {name} defined twice.")
+            return self.all_parameters[name]
+        self.all_parameters[name] = get_parameter(name, default_value)
+        return self.all_parameters[name]
+
+    def __getattr__(self, item):
+        def func(x=None):
+            return self.parameters(item, x)
+        return func
+
+    def __call__(self, item, x=None):
+        return self.parameters(item, x)
+
+    def _get_kwargs(self):
+        return self.all_parameters.items()
+
+command_line_parameters = CommandLineParameters()
