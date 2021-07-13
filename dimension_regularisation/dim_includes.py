@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
 import os
+import time
 
 
 class PlotAlpha(keras.callbacks.Callback):
@@ -22,6 +23,7 @@ class PlotAlpha(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         logs["epoch"] = epoch
+        logs["time"] = time.time()
         self.data.append(logs)
         eigen_values_list = []
         names = []
