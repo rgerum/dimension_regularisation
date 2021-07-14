@@ -17,10 +17,13 @@ file = sys.argv[3]
 argv = sys.argv[4:]
 
 arg_dict = args_to_dict(argv)
-arg_dict["output"] = Path("/home/rgerum/scratch/dimension_regularisation/logs") / arg_dict["output"]
+# add the current path + logs to the output path
+if "output" in arg_dict:
+    arg_dict["output"] = Path(os.getcwd()) / "logs" / arg_dict["output"]
+    Path(arg_dict["output"]).mkdir(parents=True, exist_ok=True)
 
 for key in sorted(list(arg_dict.keys()), key=len, reverse=True):
-    name = name.replace("$"+key, str(arg_dict[key]))
+    name = name.replace("@"+key, str(arg_dict[key]))
 command = f"python {file} {dict_to_args(arg_dict)}"
 
 with open("command_history.txt", "a") as fp:
