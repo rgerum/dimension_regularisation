@@ -22,7 +22,7 @@ if p.weight_share(False) is True:
 if p.augmentation(True) is True:
     augmentation = keras.models.Sequential([
         keras.layers.experimental.preprocessing.RandomFlip("horizontal"),
-        keras.layers.experimental.preprocessing.RandomTranslation(0.2, 0.2),
+        #keras.layers.experimental.preprocessing.RandomTranslation(0.2, 0.2),
         keras.layers.experimental.preprocessing.RandomRotation(0.2),
     ], name="augmentation")
 else:
