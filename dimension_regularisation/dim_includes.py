@@ -197,6 +197,9 @@ def get_parameter(parameter_name, default_value):
     for i, name in enumerate(sys.argv[:-1]):
         # did we find it? cast to desired value
         if name == "--"+parameter_name:
+            if type(default_value) == bool:
+                if sys.argv[i+1] == "False":
+                    return False
             return type(default_value)(sys.argv[i+1])
     # if not return default
     return default_value
@@ -208,6 +211,9 @@ def parameters(name, default_value):
 
 class CommandLineParameters:
     all_parameters = {}
+    def __init__(self):
+        import sys
+        print(" ".join(sys.argv))
 
     def parameters(self, name, default_value=None):
         if name in self.all_parameters:
