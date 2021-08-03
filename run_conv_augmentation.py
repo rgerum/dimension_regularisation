@@ -35,20 +35,26 @@ model = keras.models.Sequential([
     augmentation,
 
     Conv2DNew(p.conv1(32), 3, activation='relu', kernel_initializer='he_uniform'),#, padding='same'),
-#    keras.layers.Conv2D(args.conv1, 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
+    keras.layers.Conv2D(p.conv1(), 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
     keras.layers.MaxPool2D(2),
     DimensionReg(p.reg1(0.), p.reg1value(1.)),
     keras.layers.Dropout(0.5),
 
     Conv2DNew(p.conv2(32), 3, activation='relu', kernel_initializer='he_uniform'),#, padding='same'),
-#    keras.layers.Conv2D(args.conv2, 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
+    keras.layers.Conv2D(p.conv2(), 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
     keras.layers.MaxPool2D(2),
     DimensionReg(p.reg2(0.), p.reg2value(1.)),
     keras.layers.Dropout(0.5),
 
-    keras.layers.Flatten(),
-    keras.layers.Dense(units=p.dense1(256), activation='relu'),
+    Conv2DNew(p.conv3(32), 3, activation='relu', kernel_initializer='he_uniform'),#, padding='same'),
+    keras.layers.Conv2D(p.conv3(), 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
+    keras.layers.MaxPool2D(2),
     DimensionReg(p.reg3(0.), p.reg3value(1.)),
+    keras.layers.Dropout(0.5),
+
+    keras.layers.Flatten(),
+    keras.layers.Dense(units=p.dense1(64), activation='relu'),
+    DimensionReg(p.reg4(0.), p.reg4value(1.)),
     keras.layers.Dense(units=num_classes, activation='softmax'),
 ])
 model.compile(optimizer='RMSprop', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -60,6 +66,6 @@ if p.weight_share() is False:
             layer.weights_shared = False
             layer._update_conv_function()
 
-history = model.fit(x_train, y_train, batch_size=1000, epochs=500, validation_data=(x_test, y_test),
+history = model.fit(x_train, y_train, batch_size=100, epochs=500, validation_data=(x_test, y_test),
                     callbacks=[PlotAlpha(getOutputPath(p), x_train, batch_size=100)])
 loss, accuracy = model.evaluate(x_test, y_test, verbose=False)
