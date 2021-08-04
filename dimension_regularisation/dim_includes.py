@@ -86,7 +86,7 @@ def linear_fit(x_data, y_data):
 
 
 @tf.function
-def getAlpha(data):
+def getAlpha(data, f=1):
     d = data#[..., 0]
     d = tf.reshape(d, (d.shape[0], -1))
     print(d.shape)
@@ -94,10 +94,24 @@ def getAlpha(data):
 
     eigen_values = tf.nn.relu(eigen_values) + 1e-8
     y = tf.math.log(eigen_values)
-    x = tf.math.log(tf.range(1, eigen_values.shape[0] + 1, 1.0, y.dtype))
+    x = tf.math.log(tf.range(1, eigen_values.shape[0] + 1, 1.0, y.dtype)*f)
 
     a, b = linear_fit(x[5:50], y[5:50])
     return -b
+
+@tf.function
+def getAlphaXY(data, f=1):
+    d = data#[..., 0]
+    d = tf.reshape(d, (d.shape[0], -1))
+    print(d.shape)
+    eigen_values = getPCAVariance(d)
+
+    eigen_values = tf.nn.relu(eigen_values) + 1e-8
+    y = tf.math.log(eigen_values)
+    x = tf.math.log(tf.range(1, eigen_values.shape[0] + 1, 1.0, y.dtype)*f)
+
+    a, b = linear_fit(x[5:50], y[5:50])
+    return x, y, a, b
 
 
 class DimensionReg(keras.layers.Layer):
@@ -114,10 +128,15 @@ class DimensionReg(keras.layers.Layer):
         return {"strength": self.strength, "target_value": self.target_value, "metric_name": self.metric_name}
 
     def call(self, x):
+        print("layer", self.metric_name, x.shape)
         if x.shape[0] == None:
             return x
+        x2 = tf.reshape(x, [x.shape[0], -1])
+        if x2.shape[1] > 10000:
+            x2 = tf.gather(x2, tf.random.uniform(shape=[10000], maxval=x2.shape[1], dtype=tf.int32, seed=10), axis=1)
 
-        alpha = getAlpha(x)
+        alpha = getAlpha(x2)
+        print(alpha)
         self.add_metric(alpha, self.metric_name)
         self.add_loss(tf.math.abs(alpha-self.target_value)*self.strength)
         return x
@@ -130,6 +149,7 @@ class DimensionRegOutput(keras.layers.Layer):
             return x
 
         d = x#[..., 0]
+        #d = d[::100, ::100, :5]
         d = tf.reshape(d, (d.shape[0], -1))
         #print(d.shape)
 
@@ -148,6 +168,37 @@ def PCAreduce(x_train, x_test, pca_dims):
     return x_train, x_test
 
 
+
+
+class GetAlphaLayer(keras.layers.Layer):
+
+    def __init__(self, strength=0.01, target_value=1, metric_name=None, **kwargs):
+        super().__init__(**kwargs)
+        self.strength = strength
+        self.target_value = target_value
+        if metric_name is None:
+            metric_name = self.name.replace("dimension_reg", "alpha")
+        self.metric_name = metric_name
+
+    def get_config(self):
+        return {"strength": self.strength, "target_value": self.target_value, "metric_name": self.metric_name}
+
+    def call(self, x):
+        print("layer", self.metric_name, x.shape)
+        if x.shape[0] == None:
+            return x
+        print("x", x.shape, len(x.shape))
+        x = tf.reshape(x, [x.shape[0], -1])
+        x = tf.gather(x, tf.random.uniform(shape=[10000], maxval=x.shape[1], dtype=tf.int32, seed=10), axis=1)
+
+        #if len(x.shape) == 4:
+        #    x = x[:, ::16, ::16, :]
+        print("x", x.shape, len(x.shape))
+        alpha = getAlpha(x)
+        print("alpha", alpha)
+        #self.add_metric(alpha, self.metric_name)
+        #self.add_loss(tf.math.abs(alpha-self.target_value)*self.strength)
+        return alpha
 
 
 def getGitHash():
