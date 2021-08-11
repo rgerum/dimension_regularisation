@@ -189,7 +189,8 @@ class GetAlphaLayer(keras.layers.Layer):
             return x
         print("x", x.shape, len(x.shape))
         x = tf.reshape(x, [x.shape[0], -1])
-        x = tf.gather(x, tf.random.uniform(shape=[10000], maxval=x.shape[1], dtype=tf.int32, seed=10), axis=1)
+        if x.shape[1] > 1000:
+            x = tf.gather(x, tf.random.uniform(shape=[1000], maxval=x.shape[1], dtype=tf.int32, seed=10), axis=1)
 
         #if len(x.shape) == 4:
         #    x = x[:, ::16, ::16, :]
@@ -228,7 +229,7 @@ def getOutputPath(args):
     ]
     parts.extend([str(k) + "=" + str(v) for k, v in args._get_kwargs() if k != "output"])
 
-    output = Path(args.output("logs")) / (" ".join(parts))
+    output = Path(args.output("logs"))# / (" ".join(parts))
     import yaml
     output.mkdir(parents=True, exist_ok=True)
     arguments = dict(datetime=parts[0], commit=parts[1], commitLong=getGitLongHash(), run_dir=os.getcwd())
