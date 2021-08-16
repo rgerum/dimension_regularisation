@@ -32,7 +32,7 @@ with open("command_history.txt", "a") as fp:
 file_content = f"""#!/bin/bash
 #SBATCH --job-name={name}
 #SBATCH --account=rrg-afyshe
-#SBATCH --time=15:00:00
+#SBATCH --time=24:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem-per-cpu=64000M
 #SBATCH --output={arg_dict["output"]}/%x-%j.txt

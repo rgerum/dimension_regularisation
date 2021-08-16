@@ -62,6 +62,6 @@ if p.weight_share() is False:
             layer.weights_shared = False
             layer._update_conv_function()
 
-history = model.fit(x_train, y_train, batch_size=100, epochs=500, validation_data=(x_test, y_test),
-                    callbacks=[PlotAlpha(getOutputPath(p), x_train, batch_size=100)])
+history = model.fit(x_train, y_train, batch_size=1000, epochs=500, validation_data=(x_test, y_test),
+                    callbacks=[PlotAlpha(getOutputPath(p), x_train, batch_size=200)])
 loss, accuracy = model.evaluate(x_test, y_test, verbose=False)
