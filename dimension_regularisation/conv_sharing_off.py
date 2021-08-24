@@ -4,10 +4,10 @@ from tensorflow import keras
 
 
 @tf.function
-def convolution_unlinked(x, kernel):
+def convolution_unlinked(x, kernel, strides):
     rank = len(x.shape)-2
-    y_shapes = [x.shape[0]] + [x.shape[1+i] - kernel.shape[i] + 1 for i in range(rank)] + [kernel.shape[rank+rank+1]]
-    y_sum = np.prod([x.shape[1+i] - kernel.shape[i] + 1 for i in range(rank)])
+    y_shapes = [x.shape[0]] + [(x.shape[1+i] - kernel.shape[i])//strides[i] + 1 for i in range(rank)] + [kernel.shape[rank+rank+1]]
+    y_sum = np.prod([(x.shape[1+i] - kernel.shape[i])//strides[i] + 1 for i in range(rank)])
     y2 = tf.TensorArray(x.dtype, y_sum)
 
     total_index = 0
@@ -19,10 +19,10 @@ def convolution_unlinked(x, kernel):
             total_index += 1
         else:
             for i in range(y_shapes[index+1]):
-                y2, total_index = summed(index+1, xtupel + (slice(i, i + kernel.shape[index]),), ytupel + (slice(i, i + 1),), pos+(i,), y2, total_index)
+                y2, total_index = summed(index+1, xtupel + (slice(i, i + kernel.shape[index]*strides[index], strides[index]),), ytupel + (slice(i, i + 1),), pos+(i,), y2, total_index)
         return y2, total_index
     y2, total_index = summed(0, (slice(None),), (slice(None),), (), y2, total_index)
-    y_shapes = [x.shape[1 + i] - kernel.shape[i] + 1 for i in range(rank)][::] + [x.shape[0]] + [
+    y_shapes = [(x.shape[1 + i] - kernel.shape[i])//strides[i] + 1 for i in range(rank)][::] + [x.shape[0]] + [
         kernel.shape[rank + rank + 1]]
     order = [rank] + list(range(rank))[::] + [len(y_shapes)-1]
     return tf.transpose(tf.reshape(y2.stack(), y_shapes), order)
@@ -43,7 +43,7 @@ class ConvNew(Conv):
     def build(self, input_shape):
         input_shape = tensor_shape.TensorShape(input_shape)
         self.input_shape_ = input_shape
-        add = [input_shape[i + 1] - self.kernel_size[i] + 1 for i in range(self.rank)]
+        add = [(input_shape[i + 1] - self.kernel_size[i])//self.strides[i] + 1 for i in range(self.rank)]
         kernel_size = self.kernel_size
         self.kernel_size = self.kernel_size + tuple(add)
 
@@ -80,7 +80,7 @@ class ConvNew(Conv):
             self._convolution_op = conv
         else:
             def conv(x, kernel):
-                return convolution_unlinked(x, kernel)
+                return convolution_unlinked(x, kernel, self.strides)
 
             self._convolution_op = conv
 
