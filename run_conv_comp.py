@@ -30,9 +30,9 @@ else:
 
 def RegLayer(reg, regvalue):
     if p.reg_type("gamma") == "gamma":
-        return DimensionRegGammaWeights(reg, regvalue),
+        return DimensionRegGammaWeights(reg, regvalue)
     else:
-        return DimensionReg(reg, regvalue),
+        return DimensionReg(reg, regvalue)
 
 model = keras.models.Sequential([
     keras.layers.InputLayer(input_shape=x_train.shape[1:]),
