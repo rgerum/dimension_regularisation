@@ -34,24 +34,24 @@ model = keras.models.Sequential([
 
     augmentation,
 
-    keras.layers.Conv2D(p.conv1(32), 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
+    Conv2DNew(p.conv1(32), 3, activation='relu', kernel_initializer='he_uniform'),
     keras.layers.MaxPool2D(2),
     DimensionReg(p.reg1(0.), p.reg1value(0.)),
 
-    keras.layers.Conv2D(p.conv2(64), 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
-    keras.layers.MaxPool2D(2),
-    DimensionReg(p.reg2(0.), p.reg2value(0.)),
+#    Conv2DNew(p.conv2(64), 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
+#    keras.layers.MaxPool2D(2),
+#    DimensionReg(p.reg2(0.), p.reg2value(0.)),
 
-    Conv2DNew(p.conv3(128), 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
-    keras.layers.MaxPool2D(2),
-    DimensionReg(p.reg3(0.), p.reg3value(0.)),
+#    Conv2DNew(p.conv3(128), 3, activation='relu', kernel_initializer='he_uniform', padding='same'),
+#    keras.layers.MaxPool2D(2),
+#    DimensionReg(p.reg3(0.), p.reg3value(0.)),
 
-    keras.layers.Flatten(),
-    keras.layers.Dense(units=p.dense1(256), activation='relu'),
-    DimensionReg(p.reg4(0.), p.reg4value(0.)),
-    keras.layers.Dense(units=p.dense2(128), activation='relu'),
-    DimensionReg(p.reg5(0.), p.reg5value(0.)),
-    keras.layers.Dense(units=num_classes, activation='softmax'),
+#    keras.layers.Flatten(),
+#    keras.layers.Dense(units=p.dense1(256), activation='relu'),
+#    DimensionReg(p.reg4(0.), p.reg4value(0.)),
+#    keras.layers.Dense(units=p.dense2(128), activation='relu'),
+#    DimensionReg(p.reg5(0.), p.reg5value(0.)),
+#    keras.layers.Dense(units=num_classes, activation='softmax'),
 ])
 model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 model.summary()
@@ -62,6 +62,9 @@ if p.weight_share() is False:
             layer.weights_shared = False
             layer._update_conv_function()
 
-history = model.fit(x_train, y_train, batch_size=1000, epochs=500, validation_data=(x_test, y_test),
-                    callbacks=[PlotAlpha(getOutputPath(p), x_train, batch_size=200)])
-loss, accuracy = model.evaluate(x_test, y_test, verbose=False)
+output = model(x_train[:1000])
+print(output.shape)
+
+#history = model.fit(x_train, y_train, batch_size=1000, epochs=500, validation_data=(x_test, y_test),
+#                    callbacks=[PlotAlpha(getOutputPath(p), x_train, batch_size=200)])
+#loss, accuracy = model.evaluate(x_test, y_test, verbose=False)
