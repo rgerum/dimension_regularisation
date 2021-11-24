@@ -28,8 +28,9 @@ if p.augmentation(True) is True:
 else:
     augmentation = keras.models.Sequential([], name="no augmentation")
 
+p.reg_type("gamma")
 def RegLayer(reg, regvalue):
-    if p.reg_type("gamma") == "gamma":
+    if p.reg_type() == "gamma":
         return DimensionRegGammaWeights(reg, regvalue)
     else:
         return DimensionReg(reg, regvalue)
