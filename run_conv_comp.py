@@ -45,13 +45,16 @@ model = keras.models.Sequential([
     #DimensionReg(p.reg1(0.), p.reg1value(1.)),
 
     Conv2DNew(p.conv2(64), 5, 2, activation='relu', kernel_initializer='he_uniform'),
+    RegLayer(p.reg2(1.), p.reg2value(1.)),
     #DimensionRegGammaWeights(p.reg2(0.), p.reg2value(0.)),
 
     Conv2DNew(p.conv3(128), 3, 1, activation='relu', kernel_initializer='he_uniform'),
+    RegLayer(p.reg3(1.), p.reg3value(1.)),
     #DimensionRegGammaWeights(p.reg3(0.), p.reg3value(0.)),
 
     keras.layers.Flatten(),
     keras.layers.Dense(units=p.dense1(1024), activation='relu'),
+    RegLayer(p.reg4(1.), p.reg4value(1.)),
     #DimensionReg(p.reg4(0.), p.reg4value(0.)),
     keras.layers.Dense(units=num_classes, activation='softmax'),
 ])
@@ -67,7 +70,7 @@ def superclass_accuracy(y_true, y_pred):
 
 model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy', superclass_accuracy])
 model.summary()
-
+exit()
 if p.weight_share() is False:
     for layer in model.layers:
         if isinstance(layer, Conv2DNew):
