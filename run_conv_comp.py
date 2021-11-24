@@ -71,7 +71,7 @@ def superclass_accuracy(y_true, y_pred):
 
 model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy', superclass_accuracy])
 model.summary()
-exit()
+
 if p.weight_share() is False:
     for layer in model.layers:
         if isinstance(layer, Conv2DNew):
