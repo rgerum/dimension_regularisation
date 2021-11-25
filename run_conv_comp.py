@@ -7,7 +7,7 @@ from dimension_regularisation.dim_includes import command_line_parameters as p
 
 
 # Setup train and test splits
-(x_train, y_train), (x_test, y_test) = getattr(keras.datasets, p.dataset("cifar100")).load_data()
+(x_train, y_train), (x_test, y_test) = getattr(keras.datasets, p.dataset("cifar10")).load_data()
 
 if p.pca_reduce(0):
     PCAreduce(x_train, x_test, p.pca_reduce())
@@ -69,7 +69,7 @@ def superclass_accuracy(y_true, y_pred):
     return tf.reduce_mean(tf.cast(y_true == y_pred, tf.float32))
 
 
-model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy', superclass_accuracy])
+model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 model.summary()
 
 if p.weight_share() is False:
