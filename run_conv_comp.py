@@ -41,15 +41,15 @@ model = keras.models.Sequential([
 
     augmentation,
 
-    Conv2DNew(p.conv1(32), 5, 2, activation='relu', kernel_initializer='he_uniform'),
+    Conv2DNew(p.conv1(32), 5, 2, activation='relu', kernel_initializer='he_uniform', padding="same"),
     RegLayer(p.reg1(1.), p.reg1value(1.)),
     #DimensionReg(p.reg1(0.), p.reg1value(1.)),
 
-    Conv2DNew(p.conv2(64), 5, 2, activation='relu', kernel_initializer='he_uniform'),
+    Conv2DNew(p.conv2(64), 5, 2, activation='relu', kernel_initializer='he_uniform', padding="same"),
     RegLayer(p.reg2(1.), p.reg2value(1.)),
     #DimensionRegGammaWeights(p.reg2(0.), p.reg2value(0.)),
 
-    Conv2DNew(p.conv3(128), 3, 1, activation='relu', kernel_initializer='he_uniform'),
+    Conv2DNew(p.conv3(128), 3, 1, activation='relu', kernel_initializer='he_uniform', padding="same"),
     RegLayer(p.reg3(1.), p.reg3value(1.)),
     #DimensionRegGammaWeights(p.reg3(0.), p.reg3value(0.)),
 
