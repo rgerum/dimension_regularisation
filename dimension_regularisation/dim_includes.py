@@ -6,25 +6,49 @@ import tensorflow as tf
 from tensorflow import keras
 import os
 import time
+from .robustness import robust_test
 
 
 class PlotAlpha(keras.callbacks.Callback):
-    def __init__(self, output, x_train, batch_size=1000):
+    def __init__(self, output, x_train, batch_size=1000, download_dir=None):
         output = Path(output)
         output.mkdir(parents=True, exist_ok=True)
         self.output = output / "data.csv"
         self.output2 = output / "alpha.csv"
+        self.model_save = output / "model_save"
+        self.state_output = output / "status.txt"
         self.x_train = x_train
         self.batch_size = batch_size
 
-    def on_train_begin(self, logs={}):
+        self.download_dir = download_dir
+
         self.data = []
         self.alpha_data = []
 
+    def started(self):
+        return Path(self.output).exists()
+
+    def load(self):
+        history = pd.read_csv(self.output)
+        history.epoch.max()
+        model = tf.keras.models.load_model("tmp_history")
+        initial_epoch = int(history.epoch.max() + 1)
+
+        self.data = [dict(history.iloc[i]) for i in range(len(history))]
+        #history_alpha = pd.read_csv(self.output2)
+        #self.alpha_data = [dict(history_alpha.iloc[i]) for i in range(len(history_alpha))]
+        return model, initial_epoch
+
     def on_epoch_end(self, epoch, logs={}):
+        for i in range(1, 6):
+            logs[f"accuracy_brightness_{i}"] = robust_test(self.model, "brightness", i, self.download_dir)
         logs["epoch"] = epoch
         logs["time"] = time.time()
         self.data.append(logs)
+
+        Path(self.model_save).mkdir(parents=True, exist_ok=True)
+        self.model.save(self.model_save)
+
         eigen_values_list = []
         names = []
         for i in range(100):
@@ -65,6 +89,13 @@ class PlotAlpha(keras.callbacks.Callback):
                 self.output2.parent.mkdir(parents=True, exist_ok=True)
             else:
                 break
+        with Path(self.state_output).open("w") as fp:
+            fp.write(f"{self.data[-1]['epoch']}\n")
+
+
+    def on_train_end(self, logs=None):
+        with Path(self.state_output).open("w") as fp:
+            fp.write(f"{self.data[-1]['epoch']} done\n")
 
 
 @tf.function
@@ -359,7 +390,7 @@ def getOutputPath(args):
     ]
     parts.extend([str(k) + "=" + str(v) for k, v in args._get_kwargs() if k != "output"])
 
-    output = Path(args.output("logs/comp_gamma100_B"))# / (" ".join(parts))
+    output = Path(args.output("logs/tmp3"))# / (" ".join(parts))
     import yaml
     output.mkdir(parents=True, exist_ok=True)
     arguments = dict(datetime=parts[0], commit=parts[1], commitLong=getGitLongHash(), run_dir=os.getcwd())

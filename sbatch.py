@@ -44,7 +44,7 @@ echo "create env"
 virtualenv --no-download  $SLURM_TMPDIR/tensorflow_env
 source $SLURM_TMPDIR/tensorflow_env
 pip install --no-index --upgrade pip
-pip install --no-index tensorflow_gpu numpy pandas matplotlib pyyaml
+pip install --no-index tensorflow_gpu numpy pandas matplotlib pyyaml tensorflow_datasets
 echo "clone"
 git clone . $SLURM_TMPDIR/repo
 echo "copy"
