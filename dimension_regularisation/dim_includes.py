@@ -363,6 +363,11 @@ class GetAlphaLayer(keras.layers.Layer):
         return alpha
 
 
+def hostname():
+    import subprocess
+    return subprocess.check_output(["hostname"]).strip()
+
+
 def getGitHash():
     import subprocess
     try:

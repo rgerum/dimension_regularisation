@@ -7,12 +7,15 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from pathlib import Path
-from dimension_regularisation.dim_includes import DimensionReg, PlotAlpha, getOutputPath, PCAreduce
+from dimension_regularisation.dim_includes import DimensionReg, PlotAlpha, getOutputPath, PCAreduce, hostname
 from dimension_regularisation.conv_sharing_off import Conv2DNew
 from dimension_regularisation.dim_includes import command_line_parameters as p
 
 import tensorflow_datasets as tfds
-download_dir = Path(__file__).parent / "tensorflowdatasets"
+if hostname() == "richard-lassonde-linux":
+    download_dir = Path(__file__).parent / "tensorflowdatasets"
+else:
+    download_dir = "/home/rgerum/scratch/tensorflowdatasets"
 
 
 # Setup train and test splits
