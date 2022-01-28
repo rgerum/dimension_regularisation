@@ -37,7 +37,7 @@ else:
         keras.layers.Lambda(lambda x: x/255),
 
         keras.layers.Conv2D(p.conv1(32), 3, 2, activation='relu', kernel_initializer='he_uniform'),
-        DimensionReg(p.reg1(0), p.reg1value(1.)),
+        DimensionReg(p.reg1(0.), p.reg1value(1.)),
         keras.layers.Conv2D(p.conv2(32), 3, 2, activation='relu', kernel_initializer='he_uniform'),
 #        DimensionReg(p.reg2(0.), p.reg2value(0.)),
         keras.layers.Conv2D(p.conv3(32), 3, 1, activation='relu', kernel_initializer='he_uniform'),
@@ -45,7 +45,7 @@ else:
 
         keras.layers.Flatten(),
         keras.layers.Dense(units=p.dense1(128), activation='relu'),
-#        DimensionReg(p.reg4(0.), p.reg4value(0.)),
+#        DimensionReg(p.reg4(0.), p.reg4value(1.)),
         keras.layers.Dense(units=num_classes, activation='softmax'),
     ])
     model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])

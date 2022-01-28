@@ -40,8 +40,9 @@ class PlotAlpha(keras.callbacks.Callback):
         return model, initial_epoch
 
     def on_epoch_end(self, epoch, logs={}):
-        for i in range(1, 6):
-            logs[f"accuracy_brightness_{i}"] = robust_test(self.model, "brightness", i, self.download_dir)
+        for mode in ["brightness", "contrast", "defocus_blur", "elastic", "gaussian_noise"]:
+            for i in range(1, 6):
+                logs[f"accuracy_{mode}_{i}"] = robust_test(self.model, mode, i, self.download_dir)
         logs["epoch"] = epoch
         logs["time"] = time.time()
         self.data.append(logs)
