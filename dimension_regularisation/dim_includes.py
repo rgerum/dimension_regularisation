@@ -264,25 +264,30 @@ class DimensionReg(keras.layers.Layer):
         if metric_name is None:
             metric_name = self.name.replace("dimension_reg", "alpha")
         self.metric_name = metric_name
+        self.calc_alpha = True
 
     def get_config(self):
         return {"strength": self.strength, "target_value": self.target_value, "metric_name": self.metric_name}
 
     def call(self, x):
-        #print("layer", self.metric_name, x.shape)
-        if x.shape[0] == None:
-            return x
+        # flatten the non-batch dimensions
         x2 = flatten(x)
-        #x2 = tf.reshape(x, [x.shape[0], -1])
+        # if the array is too big create a random sampled sub set
         if x2.shape[1] > 10000:
             x2 = tf.gather(x2, tf.random.uniform(shape=[10000], maxval=x2.shape[1], dtype=tf.int32, seed=10), axis=1)
-
-        alpha = getAlpha(x2)
-        #print(alpha)
+        # get the alpha value
+        if self.calc_alpha:
+            alpha = getAlpha(x2)
+        else:
+            alpha = 0
+        # record it as a metric
         self.add_metric(alpha, self.metric_name)
+        # calculate the loss and add is a metric
         loss = tf.math.abs(alpha-self.target_value)*self.strength
         self.add_metric(loss, self.metric_name+"_loss")
         self.add_loss(loss)
+
+        # return the unaltered x
         return x
 
 
