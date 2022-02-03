@@ -44,7 +44,7 @@ else:
     model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
 
-history = model.fit(x_train, y_train, batch_size=200, epochs=50, validation_data=(x_test, y_test),
+history = model.fit(x_train, y_train, batch_size=200, epochs=200, validation_data=(x_test, y_test),
                     initial_epoch=initial_epoch,
                     callbacks=[cb]
 )
