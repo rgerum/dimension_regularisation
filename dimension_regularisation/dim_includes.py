@@ -112,7 +112,11 @@ def getPCAVariance(data):
     sigma = tf.tensordot(tf.transpose(normalized_data), normalized_data, axes=1)
     eigen_values, eigen_vectors = tf.linalg.eigh(sigma)
 
-    return eigen_values[::-1] / data.shape[0]
+    if data.shape[0] is None:
+        eigen_values_normed = eigen_values[::-1]
+    else:
+        eigen_values_normed = eigen_values[::-1] / data.shape[0]
+    return eigen_values_normed
 
 if 0:
     import matplotlib.pyplot as plt
