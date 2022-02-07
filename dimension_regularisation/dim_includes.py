@@ -107,6 +107,7 @@ class GetMeanStd(keras.layers.Layer):
         return x
 
 
+from .dimension_reg_layer import get_pca_variance
 class DimensionRegOutput(keras.layers.Layer):
 
     def call(self, x):
@@ -118,7 +119,7 @@ class DimensionRegOutput(keras.layers.Layer):
         d = tf.reshape(d, (d.shape[0], -1))
         #print(d.shape)
 
-        eigen_values = getPCAVariance(d)
+        eigen_values = get_pca_variance(d)
 
         eigen_values = tf.nn.relu(eigen_values) + 1e-8
         return eigen_values
@@ -210,7 +211,7 @@ def getOutputPath(args):
     ]
     parts.extend([str(k) + "=" + str(v) for k, v in args._get_kwargs() if k != "output"])
     print("parts", parts)
-    output = Path(args.output("logs/tmp3"))# / (" ".join(parts))
+    output = Path(args.filename_logs("logs/tmp3"))# / (" ".join(parts))
     import yaml
     output.mkdir(parents=True, exist_ok=True)
     arguments = dict(datetime=parts[0], commit=parts[1], commitLong=getGitLongHash(), run_dir=os.getcwd())

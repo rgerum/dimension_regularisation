@@ -1,21 +1,12 @@
-import os
-#os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-#os.environ["CUDA_VISIBLE_DEVICES"]="-1"
-
-
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from pathlib import Path
-from dimension_regularisation.dim_includes import DimensionReg, PlotAlpha, getOutputPath, PCAreduce, hostname
-from dimension_regularisation.conv_sharing_off import Conv2DNew
+from dimension_regularisation.dim_includes import getOutputPath
+from dimension_regularisation.dimension_reg_layer import DimensionReg
+from dimension_regularisation.callbacks import SaveHistory, SlurmJobSubmitterStatus
+from dimension_regularisation.robustness import get_robustness_metrics
 from dimension_regularisation.dim_includes import command_line_parameters as p
-
-import tensorflow_datasets as tfds
-if hostname() == "richard-lassonde-linux":
-    download_dir = Path(__file__).parent / "tensorflowdatasets"
-else:
-    download_dir = "/home/rgerum/scratch/tensorflowdatasets"
 
 
 # Setup train and test splits
@@ -26,7 +17,7 @@ num_classes = np.max(y_test)+1
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
-cb = PlotAlpha(getOutputPath(p), x_train, batch_size=200, download_dir=download_dir)
+cb = SaveHistory(getOutputPath(p), additional_logs_callback=get_robustness_metrics)
 if cb.started() and 0:
     model, initial_epoch = cb.load()
 else:
@@ -46,7 +37,7 @@ else:
 
 history = model.fit(x_train, y_train, batch_size=200, epochs=200, validation_data=(x_test, y_test),
                     initial_epoch=initial_epoch,
-                    callbacks=[cb]
+                    callbacks=[cb, SlurmJobSubmitterStatus()]
 )
 
 

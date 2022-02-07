@@ -1,5 +1,21 @@
+from pathlib import Path
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from dimension_regularisation.dim_includes import hostname
+
+
+if hostname() == "richard-lassonde-linux":
+    download_dir = Path(__file__).parent / "tensorflowdatasets"
+else:
+    download_dir = "/home/rgerum/scratch/tensorflowdatasets"
+
+
+def get_robustness_metrics(model):
+    logs = {}
+    for mode in ["brightness", "contrast", "defocus_blur", "elastic", "gaussian_noise"]:
+        for i in range(1, 6):
+            logs[f"accuracy_{mode}_{i}"] = robust_test(model, mode, i, download_dir)
+    return logs
 
 
 @tf.function
