@@ -1,8 +1,11 @@
 from pathlib import Path
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from dimension_regularisation.dim_includes import hostname
 
+
+def hostname():
+    import subprocess
+    return subprocess.check_output(["hostname"]).strip()
 
 if hostname() == "richard-lassonde-linux":
     download_dir = Path(__file__).parent / "tensorflowdatasets"
