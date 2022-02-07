@@ -26,18 +26,21 @@ class PlotAlpha(keras.callbacks.Callback):
         self.alpha_data = []
 
     def started(self):
-        return Path(self.output).exists()
+        if Path(self.output).exists():
+            try:
+                history = pd.read_csv(self.output)
+                history.epoch.max()
+                model = tf.keras.models.load_model("tmp_history")
+                initial_epoch = int(history.epoch.max() + 1)
+                data = [dict(history.iloc[i]) for i in range(len(history))]
+                self.start_data = dict(model=model, initial_epoch=initial_epoch, data=data)
+                return True
+            except:
+                return False
+        return False
 
     def load(self):
-        history = pd.read_csv(self.output)
-        history.epoch.max()
-        model = tf.keras.models.load_model("tmp_history")
-        initial_epoch = int(history.epoch.max() + 1)
-
-        self.data = [dict(history.iloc[i]) for i in range(len(history))]
-        #history_alpha = pd.read_csv(self.output2)
-        #self.alpha_data = [dict(history_alpha.iloc[i]) for i in range(len(history_alpha))]
-        return model, initial_epoch
+        return self.start_data["model"], self.start_data["initial_epoch"]
 
     def on_epoch_end(self, epoch, logs={}):
         try:
