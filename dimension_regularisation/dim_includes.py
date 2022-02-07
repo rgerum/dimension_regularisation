@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -406,6 +408,17 @@ def getGitLongHash():
         return ""
 
 
+def getCommandLineArgs():
+    index = 0
+    data = {}
+    while index < len(sys.argv):
+        if sys.argv[index].startswith("--"):
+            data[sys.argv[index][2:]] = sys.argv[index+1]
+            index += 1
+        index += 1
+    return data
+
+
 def getOutputPath(args):
     from datetime import datetime
     parts = [
@@ -413,12 +426,14 @@ def getOutputPath(args):
         getGitHash(),
     ]
     parts.extend([str(k) + "=" + str(v) for k, v in args._get_kwargs() if k != "output"])
-
+    print("parts", parts)
     output = Path(args.output("logs/tmp3"))# / (" ".join(parts))
     import yaml
     output.mkdir(parents=True, exist_ok=True)
     arguments = dict(datetime=parts[0], commit=parts[1], commitLong=getGitLongHash(), run_dir=os.getcwd())
     arguments.update(args._get_kwargs())
+    print("arguments", arguments)
+
     with open(output / "arguments.yaml", "w") as fp:
         yaml.dump(arguments, fp)
     print("OUTPUT_PATH=\""+str(output)+"\"")

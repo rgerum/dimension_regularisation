@@ -1,16 +1,31 @@
 import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import glob
 
-from net_helpers import read_data
-import pylustrator
+from scripts.net_helpers import read_data
+
 #pylustrator.start()
 
 output_add = "_cifar10_gamma"
-data1 = read_data(r"../cedar_logs_expcifar2/iter-{iter}_reg1-{reg1}_reg1value-{reg1value}/", file_name="data.csv")
+data1 = read_data(r"../cedar_logs_expcifar3/iter-{iter}_reg1-{reg1}_reg1value-{reg1value}/", file_name="data.csv")
 print(data1.filename.unique())
-if 0:
+if 1:
+    data11 = data1
+    index = 0
+    ax = None
+    for index0, (name, data1) in enumerate(data11.groupby("reg1value")):
+        for name2, d0 in data1.groupby("reg1"):
+            index += 1
+            if ax is not None:
+                plt.subplot(5, 5, index, sharex=ax, sharey=ax)
+            else:
+                ax = plt.subplot(5, 5, index)
+            plt.title(f"{name}, {name2}")
+            for xx, d00 in d0.groupby("iter"):
+                d = d00.groupby("epoch")[f"alpha_loss"].agg(["mean", "sem"])
+                p, = plt.plot(d.index, d["mean"], label=name)
+            # plt.fill_between(d.index, d["mean"] - d["sem"], d["mean"] + d["sem"], color=p.get_color(), alpha=0.5)
+            # plt.plot(d.epoch, d.accuracy_brightness_1)
+            plt.axhline(float(name))
+elif 0:
     for name, d0 in data1.groupby("reg1"):
         for i in range(1, 6):
             plt.subplot(1, 6, i)
@@ -61,7 +76,6 @@ plt.legend()
 #plt.ylim(bottom=0.5)
 #% start: automatic generated code from pylustrator
 plt.figure(1).ax_dict = {ax.get_label(): ax for ax in plt.figure(1).axes}
-import matplotlib as mpl
 #% end: automatic generated code from pylustrator
 plt.show()
 

@@ -27,7 +27,7 @@ y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
 cb = PlotAlpha(getOutputPath(p), x_train, batch_size=200, download_dir=download_dir)
-if cb.started() and 1:
+if cb.started() and 0:
     model, initial_epoch = cb.load()
 else:
     initial_epoch = 0
@@ -37,8 +37,8 @@ else:
         keras.layers.Lambda(lambda x: x/255),
 
         keras.layers.Flatten(),
-        keras.layers.Dense(units=p.dense1(2000), activation='relu'),
-        DimensionReg(p.reg1(0.), p.reg1value(1.)),
+        keras.layers.Dense(units=p.dense1(1000), activation='relu'),
+        DimensionReg(p.reg1(1.), p.reg1value(0.6)),
         keras.layers.Dense(units=num_classes, activation='softmax'),
     ])
     model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])

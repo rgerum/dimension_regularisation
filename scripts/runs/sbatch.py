@@ -26,7 +26,7 @@ for key in sorted(list(arg_dict.keys()), key=len, reverse=True):
     name = name.replace("@"+key, str(arg_dict[key]))
 command = f"python {file} {dict_to_args(arg_dict)}"
 
-with open("command_history.txt", "a") as fp:
+with open("../../command_history.txt", "a") as fp:
     fp.write(" ".join(sys.argv)+"\n")
 
 file_content = f"""#!/bin/bash
@@ -59,7 +59,7 @@ echo "done"
 
 print(file_content)
 
-with open("job.sh", "w") as fp:
+with open("../../job.sh", "w") as fp:
     fp.write(file_content)
 
 os.system("sbatch job.sh")

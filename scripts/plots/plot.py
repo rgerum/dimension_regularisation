@@ -1,9 +1,7 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
-import glob
 
-from net_helpers import read_data
+from scripts.net_helpers import read_data
 import pylustrator
 pylustrator.start()
 
@@ -67,7 +65,6 @@ plt.plot([fmt(x) for x in d1.index], d2["mean"]/d1["mean"], color="k")
 
 #% start: automatic generated code from pylustrator
 plt.figure(1).ax_dict = {ax.get_label(): ax for ax in plt.figure(1).axes}
-import matplotlib as mpl
 plt.figure(1).set_size_inches(22.540000/2.54, 12.170000/2.54, forward=True)
 plt.figure(1).axes[0].set_ylim(0.3911857662495933, 0.5340535182386119)
 plt.figure(1).axes[0].grid(True)

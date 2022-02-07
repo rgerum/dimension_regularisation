@@ -130,6 +130,6 @@ dmypy.json
 
 
 .idea/
-logs/
 
-/cedar_logs/
+results/
+data/
