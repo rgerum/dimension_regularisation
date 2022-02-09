@@ -1,22 +1,24 @@
 import numpy as np
-import tensorflow as tf
 from tensorflow import keras
-from pathlib import Path
+import tensorflow as tf
+print(tf.version.VERSION)
+
 from dimension_regularisation.dim_includes import getOutputPath
 from dimension_regularisation.dimension_reg_layer import DimensionReg
 from dimension_regularisation.callbacks import SaveHistory, SlurmJobSubmitterStatus
 from dimension_regularisation.robustness import get_robustness_metrics
 from dimension_regularisation.dim_includes import command_line_parameters as p
 
-
 # Setup train and test splits
 (x_train, y_train), (x_test, y_test) = getattr(keras.datasets, p.dataset("cifar10")).load_data()
 
-
+# get the number of classes
 num_classes = np.max(y_test)+1
+# convert
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
+# restart from previous checkpoint if it exists
 cb = SaveHistory(getOutputPath(p), additional_logs_callback=get_robustness_metrics)
 if cb.started() and 0:
     model, initial_epoch = cb.load()
@@ -39,8 +41,3 @@ history = model.fit(x_train, y_train, batch_size=200, epochs=200, validation_dat
                     initial_epoch=initial_epoch,
                     callbacks=[cb, SlurmJobSubmitterStatus()]
 )
-
-
-
-
-#loss, accuracy = model.evaluate(x_test, y_test, verbose=False)

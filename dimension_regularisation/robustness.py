@@ -5,10 +5,11 @@ import tensorflow_datasets as tfds
 
 def hostname():
     import subprocess
-    return subprocess.check_output(["hostname"]).strip()
+    return subprocess.check_output(["hostname"]).strip().decode()
+
 
 if hostname() == "richard-lassonde-linux":
-    download_dir = Path(__file__).parent / "tensorflowdatasets"
+    download_dir = Path(__file__).parent / ".." / "data" / "tensorflowdatasets"
 else:
     download_dir = "/home/rgerum/scratch/tensorflowdatasets"
 

@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-
 @tf.function
 def flatten(inputs):
     """ flatten the non batch dimensions of a tensor. Works also with None as the batch dimension. """
@@ -25,11 +24,8 @@ def get_pca_variance(data):
     sigma = tf.tensordot(tf.transpose(normalized_data), normalized_data, axes=1)
     eigen_values, eigen_vectors = tf.linalg.eigh(sigma)
 
-    if data.shape[0] is None:
-        eigen_values_normed = eigen_values[::-1]
-    else:
-        eigen_values_normed = eigen_values[::-1] / data.shape[0]
-    return eigen_values_normed
+    # resort (from big to small) and normalize sum to 1
+    return eigen_values[::-1] / tf.reduce_sum(eigen_values)
 
 
 @tf.function
