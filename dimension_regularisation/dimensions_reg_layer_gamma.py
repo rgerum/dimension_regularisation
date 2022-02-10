@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from .pca_variance import flatten, get_pca_variance, linear_fit
-
+from .dimension_reg_layer import get_alpha
 
 @tf.function
 def get_alpha_regularizer(data, alpha=1.):
@@ -40,4 +40,12 @@ class DimensionRegGammaWeights(keras.layers.Layer):
         loss = get_alpha_regularizer(x2, self.target_value) * self.strength
         self.add_loss(loss)
         self.add_metric(loss, self.metric_name+"_loss")
+
+        if self.calc_alpha:
+            alpha = get_alpha(x2)
+        else:
+            alpha = 0
+        # record it as a metric
+        self.add_metric(alpha, self.metric_name)
+
         return x
