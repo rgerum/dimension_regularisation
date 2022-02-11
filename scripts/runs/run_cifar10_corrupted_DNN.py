@@ -5,6 +5,7 @@ print(tf.version.VERSION)
 
 from dimension_regularisation.dim_includes import getOutputPath
 from dimension_regularisation.dimension_reg_layer import DimensionReg
+from dimension_regularisation.dimensions_reg_layer_gamma import DimensionRegGammaWeights
 from dimension_regularisation.callbacks import SaveHistory, SlurmJobSubmitterStatus
 from dimension_regularisation.robustness import get_robustness_metrics
 from dimension_regularisation.dim_includes import command_line_parameters as p
@@ -31,7 +32,7 @@ else:
 
         keras.layers.Flatten(),
         keras.layers.Dense(units=p.dense1(1000), activation='relu'),
-        DimensionReg(p.reg1(1.), p.reg1value(0.6)),
+        DimensionRegGammaWeights(p.reg1(1.), p.reg1value(0.6)),
         keras.layers.Dense(units=num_classes, activation='softmax'),
     ])
     model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -39,5 +40,5 @@ else:
 
 history = model.fit(x_train, y_train, batch_size=200, epochs=200, validation_data=(x_test, y_test),
                     initial_epoch=initial_epoch,
-                    callbacks=[cb, SlurmJobSubmitterStatus()]
+                    callbacks=[cb]
 )
