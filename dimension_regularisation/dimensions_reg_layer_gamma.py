@@ -27,6 +27,8 @@ class DimensionRegGammaWeights(keras.layers.Layer):
             metric_name = self.name.replace("dimension_reg", "alpha")
         self.metric_name = metric_name
 
+        self.calc_alpha = True
+
     def get_config(self):
         return {"strength": self.strength, "target_value": self.target_value, "metric_name": self.metric_name}
 
