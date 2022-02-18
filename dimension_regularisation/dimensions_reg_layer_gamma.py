@@ -24,7 +24,7 @@ class DimensionRegGammaWeights(keras.layers.Layer):
         self.strength = strength
         self.target_value = target_value
         if metric_name is None:
-            metric_name = self.name.replace("dimension_reg", "alpha")
+            metric_name = self.name.replace("dimension_reg_gamma_weights", "alpha")
         self.metric_name = metric_name
 
         self.calc_alpha = True
