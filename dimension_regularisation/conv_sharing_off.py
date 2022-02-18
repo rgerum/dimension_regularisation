@@ -24,8 +24,14 @@ def convolution_unlinked(x, kernel, strides):
     y2, total_index = summed(0, (slice(None),), (slice(None),), (), y2, total_index)
     y_shapes = [(x.shape[1 + i] - kernel.shape[i])//strides[i] + 1 for i in range(rank)][::] + [x.shape[0]] + [
         kernel.shape[rank + rank + 1]]
+    y_shapes = tuple([tf.shape(x)[0]] + [(x.shape[1 + i] - kernel.shape[i]) // strides[i] + 1 for i in range(rank)][::] + [
+        kernel.shape[rank + rank + 1]])
     order = [rank] + list(range(rank))[::] + [len(y_shapes)-1]
-    return tf.transpose(tf.reshape(y2.stack(), y_shapes), order)
+
+    stack = y2.stack()
+    stack_transposed = tf.transpose(stack, [1, 0, 2])
+    stack_transposed_reshaped = tf.reshape(stack_transposed, y_shapes)
+    return stack_transposed_reshaped
 
 
 def kernel_unlink(x_shape, kernel):
@@ -36,7 +42,7 @@ def kernel_unlink(x_shape, kernel):
 from tensorflow.python.keras.layers.convolutional import Conv
 from tensorflow.python.framework import tensor_shape
 class ConvNew(Conv):
-    def __init__(self, *args, weights_shared=True, **kwargs):
+    def __init__(self, *args, weights_shared=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.weights_shared = weights_shared
 
