@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-
+from dimension_regularisation.pca_variance import flatten
 
 @tf.function
 def convolution_unlinked(x, kernel, strides):
@@ -103,91 +103,57 @@ class Conv3DNew(ConvNew):
     def __init__(self, *args, **kwargs):
         super().__init__(3, *args, **kwargs)
 
-if __name__ == "__main__":
-    if 0:
-        # Get the dataset
-        (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+##
+from tensorflow.python.keras import activations
+from tensorflow.python.keras.utils import conv_utils
+class FreeConv2D(tf.keras.layers.Layer):
+    def __init__(self, filters=32, kernel_size=5, strides=2, activation=None, **kwargs):
+        #filters,
+        #kernel_size,
+        #strides = (1, 1),
+        super().__init__(**kwargs)
+        self.units = filters
+        rank = 2
+        self.kernel_size = conv_utils.normalize_tuple(kernel_size, rank, 'kernel_size')
+        self.strides = conv_utils.normalize_tuple(strides, rank, 'strides')
 
-        # convert it to one-hot encoding
-        num_classes = np.max(y_test)+1
-        y_train = keras.utils.to_categorical(y_train, num_classes)
-        y_test = keras.utils.to_categorical(y_test, num_classes)
+        self.activation = activations.get(activation)
 
-        # build the model
-        model = keras.models.Sequential([
-            keras.layers.InputLayer(input_shape=x_train.shape[1:]),
-            keras.layers.Lambda(lambda x: x/255),
-            Conv2DNew(10, 5, activation='relu'),
-            keras.layers.Dropout(0.5),
-            keras.layers.Flatten(),
-            keras.layers.Dense(units=num_classes, activation='softmax'),
-        ])
-        # compile it
-        model.compile(optimizer='RMSprop', loss='categorical_crossentropy', metrics=['accuracy'])
-        model.summary()
+    def build(self, input_shape):
+        h, w, c = input_shape[-3], input_shape[-2], input_shape[-1]
+        u = self.units
+        k1, k2 = self.kernel_size
+        s1, s2 = self.strides
+        b = 2
 
-        # train some time with linked weights
-        history = model.fit(x_train, y_train, batch_size=1000, epochs=5, validation_data=(x_test, y_test))
+        i1 = np.tile(np.arange(np.ceil((h - k1 + 1) / s1) * np.ceil((w - k2 + 1) / s2) * u)[:, None],
+                     (1, k1 * k2 * c)).ravel()
+        i2 = np.lib.stride_tricks.as_strided(np.arange(w * h * c, dtype=np.uint16), shape=(
+        int(np.ceil((h - k1 + 1) / s1)), int(np.ceil((w - k2 + 1) / s2)), u, k1, k2 * c),
+                                             strides=(b * w * c * s1, b * c * s2, b * 0, b * w * c, b * 1)).flatten()
 
-        # disable the weight sharing and compile again
-        model.layers[1].disable_weightshare()
-        model.compile(optimizer='RMSprop', loss='categorical_crossentropy', metrics=['accuracy'])
+        self.toep_indices = np.array((i1, i2)).T
+        self.output_shape2 = (int(np.ceil((h - k1 + 1) / s1)), int(np.ceil((w - k2 + 1) / s2)), u)
+        self.input_shape2 = (h, w, c)
+        self.toepl_shape = [(h*w*c), int(np.ceil((h - k1 + 1) / s1))*int(np.ceil((w - k2 + 1) / s2))*u]
 
-        # fit again without shared weights
-        history = model.fit(x_train, y_train, batch_size=1000, epochs=20, validation_data=(x_test, y_test))
+        self.w = self.add_weight(
+            shape=(int(np.ceil((h - k1 + 1) / s1)), int(np.ceil((w - k2 + 1) / s2)), u, k1, k2, c),
+            initializer="random_normal",
+            trainable=True,
+        )
+        self.b = self.add_weight(
+            shape=(int(np.ceil((h - k1 + 1) / s1)), int(np.ceil((w - k2 + 1) / s2)), u), initializer="random_normal", trainable=True
+        )
 
-        # plot the weights
-        kernel = model.layers[1].weights[0]
-        import matplotlib.pyplot as plt
-        plt.subplot(221)
-        plt.imshow(kernel[:, :, 0, 0, 0, 0])
-        plt.subplot(222)
-        plt.imshow(kernel[:, :, 10, 0, 0, 0])
-        plt.subplot(223)
-        plt.imshow(kernel[:, :, 0, 10, 0, 0])
-        plt.subplot(224)
-        plt.imshow(kernel[:, :, 10, 10, 0, 0])
-        plt.show()
-    else:
-        # Get the dataset
-        (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+    def call(self, x):
+        shape = x.shape
+        x = flatten(x)
 
-        # convert it to one-hot encoding
-        num_classes = np.max(y_test) + 1
-        y_train = keras.utils.to_categorical(y_train, num_classes)
-        y_test = keras.utils.to_categorical(y_test, num_classes)
+        t = tf.sparse.SparseTensor(self.toep_indices, tf.reshape(self.w, [-1]), dense_shape=self.toepl_shape[::-1])
+        x = tf.transpose(tf.sparse.sparse_dense_matmul(tf.cast(t, tf.float32), tf.transpose(x)))
 
-        # build the model
-        model = keras.models.Sequential([
-            keras.layers.InputLayer(input_shape=x_train.shape[1:]),
-            keras.layers.Lambda(lambda x: x / 255),
-            Conv2DNew(10, 5, weights_shared=True, activation='relu'),
-            keras.layers.Dropout(0.5),
-            keras.layers.Flatten(),
-            keras.layers.Dense(units=num_classes, activation='softmax'),
-        ])
-        print("---------------")
-
-        model.layers[1].weights_shared = False
-        model.layers[1]._update_conv_function()
-
-        # compile it
-        model.compile(optimizer='RMSprop', loss='categorical_crossentropy', metrics=['accuracy'])
-        model.summary()
-
-        # train some time with linked weights
-        history = model.fit(x_train, y_train, batch_size=1000, epochs=25, validation_data=(x_test, y_test))
-
-        # plot the weights
-        kernel = model.layers[1].weights[0]
-        import matplotlib.pyplot as plt
-
-        plt.subplot(221)
-        plt.imshow(kernel[:, :, 0, 0, 0, 0])
-        plt.subplot(222)
-        plt.imshow(kernel[:, :, 10, 0, 0, 0])
-        plt.subplot(223)
-        plt.imshow(kernel[:, :, 0, 10, 0, 0])
-        plt.subplot(224)
-        plt.imshow(kernel[:, :, 10, 10, 0, 0])
-        plt.show()
+        outputs = tf.reshape(x, [-1, self.output_shape2[0], self.output_shape2[1], self.output_shape2[2]]) + self.b
+        if self.activation is not None:
+            return self.activation(outputs)
+        return outputs
