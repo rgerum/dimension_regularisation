@@ -21,6 +21,19 @@ def get_alpha(data, min_x=5, max_x=50):
     return -b
 
 
+@tf.function
+def get_alpha_from_lambdas(eigen_values, min_x=5, max_x=50):
+    """ get the power law exponent of the PCA value distribution """
+    # ensure that eigenvalues are slightly positive (prevents log from giving nan)
+    eigen_values = tf.nn.relu(eigen_values) + 1e-8
+    # get the logarithmic x and y values to fit
+    y = tf.math.log(eigen_values)
+    x = tf.math.log(tf.range(1, eigen_values.shape[0] + 1, 1.0, y.dtype))
+    a, b = linear_fit(x[min_x:max_x], y[min_x:max_x])
+    # return the negative of the slope
+    return -b
+
+
 class DimensionReg(keras.layers.Layer):
     """ a layer to calculate and regularize the exponent of the eigenvalue spectrum """
     def __init__(self, strength=0.01, target_value=1, metric_name=None, **kwargs):
