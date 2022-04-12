@@ -58,9 +58,15 @@ class SaveHistory(keras.callbacks.Callback):
         output.mkdir(parents=True, exist_ok=True)
         self.filename_logs = output / "data.csv"
         self.filename_model = output / "model_save"
+        self.filename_model_best = output / "model_save_best"
+        self.filename_model_best_data = output / "model_save_best_data.csv"
 
         self.logs_history = []
+        if not isinstance(additional_logs_callback, (list, tuple)):
+            additional_logs_callback = [additional_logs_callback]
         self.additional_logs_callback = additional_logs_callback
+
+        self.best_val_acc = 0
 
     def started(self):
         # if the output file exists
@@ -95,7 +101,8 @@ class SaveHistory(keras.callbacks.Callback):
         logs["time"] = time.time()
         # maybe add additional metrics
         if self.additional_logs_callback is not None:
-            logs.update(self.additional_logs_callback(self.model))
+            for func in self.additional_logs_callback:
+                logs.update(func(self.model))
         # store the logs
         self.logs_history.append(logs)
 
@@ -106,6 +113,14 @@ class SaveHistory(keras.callbacks.Callback):
         # save the current model
         Path(self.filename_model).mkdir(parents=True, exist_ok=True)
         self.model.save(self.filename_model)
+
+        # if we found something better than the previous "best"
+        if logs["val_accuracy"] > self.best_val_acc:
+            self.best_val_acc = logs["val_accuracy"]
+            Path(self.filename_model_best).mkdir(parents=True, exist_ok=True)
+            self.model.save(self.filename_model_best)
+            Path(self.filename_model_best_data.parent).mkdir(parents=True, exist_ok=True)
+            pd.DataFrame([logs]).to_csv(self.filename_model_best_data, index=False)
 
 
 class SlurmJobSubmitterStatus(keras.callbacks.Callback):
