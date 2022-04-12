@@ -87,25 +87,27 @@ class DimensionRegGammaWeightsPreComputedBase(tf.keras.layers.Layer):
     def call(self, x):
         if x.shape[0] == None:
             return x
-        x2 = flatten(x)
-        if x2.shape[1] > 10000:
-            x2 = tf.gather(x2, tf.random.uniform(shape=[10000], maxval=x2.shape[1], dtype=tf.int32, seed=10), axis=1)
-
-        if self.calculate_eigenvectors is True:
-            self.eigen_vectors = get_eigen_vectors(x2)
-            print("self.eigen_vectors", self.eigen_vectors.shape)
-
-        eigen_values = get_eigen_values_from_vectors(x2, self.eigen_vectors)
-
-        loss = get_alpha_regularizer_from_lambdas(eigen_values, self.target_value) * self.strength
-        loss = tf.cast(loss, tf.float32)
-        self.add_loss(loss)
-        self.add_metric(loss, self.metric_name+"_loss")
 
         if self.calc_alpha:
+            x2 = flatten(x)
+            if x2.shape[1] > 10000:
+                x2 = tf.gather(x2, tf.random.uniform(shape=[10000], maxval=x2.shape[1], dtype=tf.int32, seed=10), axis=1)
+
+            if self.calculate_eigenvectors is True:
+                self.eigen_vectors = get_eigen_vectors(x2)
+                print("self.eigen_vectors", self.eigen_vectors.shape)
+
+            eigen_values = get_eigen_values_from_vectors(x2, self.eigen_vectors)
+
+            loss = get_alpha_regularizer_from_lambdas(eigen_values, self.target_value) * self.strength
+            loss = tf.cast(loss, tf.float32)
             alpha = get_alpha_from_lambdas(eigen_values)
         else:
+            loss = 0
             alpha = 0
+
+        self.add_loss(loss)
+        self.add_metric(loss, self.metric_name + "_loss")
         # record it as a metric
         self.add_metric(alpha, self.metric_name)
 
