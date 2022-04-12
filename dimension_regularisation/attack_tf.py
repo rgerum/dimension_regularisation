@@ -16,6 +16,14 @@ def accuracy(y_true, y_pred):
 
 
 def pgd(model, x, y, eps, noRestarts=1, lr=0.01, gradSteps=40):
+    # ensure the input format is float from 0 to 1 and y is categorical
+    x = tf.cast(x, tf.float32)
+    if tf.reduce_max(x) > 128:
+        x = x / 255.
+    if len(y.shape) == 1:
+        y = tf.keras.utils.to_categorical(y, tf.reduce_max(y) + 1)
+    y = tf.cast(y, tf.float32)
+
     if not isinstance(eps, (list, tuple, np.ndarray)):
         eps = [eps]
 
@@ -36,9 +44,9 @@ def pgd(model, x, y, eps, noRestarts=1, lr=0.01, gradSteps=40):
             xs.append(xT)
             losses[r] = ellT
         idx = np.argmax(losses)
-        x = xs[idx]  # choose the one with the largest loss function
+        x_adv = xs[idx]  # choose the one with the largest loss function
         ell = losses[idx]
-        a = accuracy(y, model(x))
+        a = accuracy(y, model(x_adv))
         accs.append(a)
     return accs
     return x, ell, a
@@ -50,6 +58,14 @@ def clip_tf(x, lb, ub):
     return x
 
 def pgd_tf(model, x_nat, x, y, eps, lr, gradSteps):
+    # ensure the input format is float from 0 to 1 and y is categorical
+    x = tf.cast(x, tf.float32)
+    if tf.reduce_max(x) > 128:
+        x = x / 255.
+    if len(y.shape) == 1:
+        y = tf.keras.utils.to_categorical(y, tf.reduce_max(y)+1)
+    y = tf.cast(y, tf.float32)
+
     for i in range(gradSteps):
         # get jacobian
         im = tf.cast(x, tf.float32)
@@ -58,7 +74,10 @@ def pgd_tf(model, x_nat, x, y, eps, lr, gradSteps):
             tape.watch(im)
             prediction = model(im)
             # loss = tf.reduce_sum(- tf.reduce_sum(prediction * input_label, axis=1) + tf.math.log(tf.reduce_sum(tf.exp(prediction), axis=1)))
-            prediction2 = tf.nn.softmax(prediction)
+            if model.layers[-1].activation.__name__ == "linear":
+                prediction2 = tf.nn.softmax(prediction)
+            else:
+                prediction2 = prediction
             loss = tf.keras.losses.CategoricalCrossentropy()(y, prediction2)
         # Get the gradients of the loss w.r.t to the input image.
         jacobian = tape.gradient(loss, im)
@@ -73,23 +92,35 @@ def pgd_tf(model, x_nat, x, y, eps, lr, gradSteps):
 
     prediction = model(x)
     # loss = tf.reduce_sum(- tf.reduce_sum(prediction * input_label, axis=1) + tf.math.log(tf.reduce_sum(tf.exp(prediction), axis=1)))
-    prediction2 = tf.nn.softmax(prediction)
+    if model.layers[-1].activation.__name__ == "linear":
+        prediction2 = tf.nn.softmax(prediction)
+    else:
+        prediction2 = prediction
     loss = tf.keras.losses.CategoricalCrossentropy()(y, prediction2)
     return x, loss
 
 
 def fgsm(model, x, y, eps):
-    im = tf.cast(x, tf.float32)
+    # ensure the input format is float from 0 to 1 and y is categorical
+    x = tf.cast(x, tf.float32)
+    if tf.reduce_max(x) > 128:
+        x = x / 255.
+    if len(y.shape) == 1:
+        y = tf.keras.utils.to_categorical(y, tf.reduce_max(y)+1)
     y = tf.cast(y, tf.float32)
+    # get the gradient
     with tf.GradientTape() as tape:
-        tape.watch(im)
-        prediction = model(im)
+        tape.watch(x)
+        prediction = model(x)
         #loss = tf.reduce_sum(- tf.reduce_sum(prediction * input_label, axis=1) + tf.math.log(tf.reduce_sum(tf.exp(prediction), axis=1)))
-        prediction2 = tf.nn.softmax(prediction)
+        if model.layers[-1].activation.__name__ == "linear":
+            prediction2 = tf.nn.softmax(prediction)
+        else:
+            prediction2 = prediction
         loss = tf.keras.losses.CategoricalCrossentropy()(y, prediction2)
 
     # Get the gradients of the loss w.r.t to the input image.
-    gradient = tape.gradient(loss, im)
+    gradient = tape.gradient(loss, x)
 
     if not isinstance(eps, (list, tuple, np.ndarray)):
         eps = [eps]
