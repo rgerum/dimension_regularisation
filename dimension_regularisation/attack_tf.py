@@ -1,6 +1,43 @@
 import numpy as np
 import tensorflow as tf
 
+import time
+class TimeIt:
+    def __init__(self, name="", repetitions=10):
+        self.name = name
+        self.repetitions = repetitions
+        self.rep_index = 0
+
+    def __iter__(self):
+        self.__enter__()
+        for i in range(self.repetitions):
+            yield i
+        print("TimeIt", self.name, (time.time() - self.t)/self.repetitions, "s")
+
+    def __enter__(self):
+        self.t = time.time()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("TimeIt", self.name, time.time()-self.t, "s")
+
+def get_attack_metrics(dataset, strengths):
+    (x_train, y_train), (x_test, y_test) = getattr(tf.keras.datasets, dataset).load_data()
+
+    def attack(model):
+        for layer in model.layers:
+            layer.calc_alpha = False
+
+        res = {}
+        with TimeIt("attack"):
+            for name, func in [("FGSM", fgsm), ("PGD", pgd)]:
+                accs = func(model, x_test, y_test, strengths)
+                for s, a in zip(strengths, accs):
+                    res[f"attack_{name}_{s:.3f}"] = a
+
+        for layer in model.layers:
+            layer.calc_alpha = True
+        return res
+    return attack
 
 def accuracy(y_true, y_pred):
     if getattr(y_true, "detach", None):
@@ -30,6 +67,7 @@ def pgd(model, x, y, eps, noRestarts=1, lr=0.01, gradSteps=40):
     x_nats = []
     accs = []
     for e in eps:
+        e = tf.cast(e, tf.float32)
         losses = [0]*noRestarts
         xs = []
         for r in range(noRestarts):
@@ -52,19 +90,15 @@ def pgd(model, x, y, eps, noRestarts=1, lr=0.01, gradSteps=40):
     return x, ell, a
 
 
+@tf.function()
 def clip_tf(x, lb, ub):
     x = tf.where(x > ub, ub, x)
     x = tf.where(x < lb, lb, x)
     return x
 
+
+@tf.function()
 def pgd_tf(model, x_nat, x, y, eps, lr, gradSteps):
-    # ensure the input format is float from 0 to 1 and y is categorical
-    x = tf.cast(x, tf.float32)
-    if tf.reduce_max(x) > 128:
-        x = x / 255.
-    if len(y.shape) == 1:
-        y = tf.keras.utils.to_categorical(y, tf.reduce_max(y)+1)
-    y = tf.cast(y, tf.float32)
 
     for i in range(gradSteps):
         # get jacobian
@@ -73,16 +107,16 @@ def pgd_tf(model, x_nat, x, y, eps, lr, gradSteps):
         with tf.GradientTape() as tape:
             tape.watch(im)
             prediction = model(im)
-            # loss = tf.reduce_sum(- tf.reduce_sum(prediction * input_label, axis=1) + tf.math.log(tf.reduce_sum(tf.exp(prediction), axis=1)))
+
             if model.layers[-1].activation.__name__ == "linear":
                 prediction2 = tf.nn.softmax(prediction)
             else:
                 prediction2 = prediction
             loss = tf.keras.losses.CategoricalCrossentropy()(y, prediction2)
-        # Get the gradients of the loss w.r.t to the input image.
+        # Get the gradients of the loss w.r.t to the input image.)
         jacobian = tape.gradient(loss, im)
 
-        xT = (x + lr * tf.sign(jacobian))
+        xT = x + lr * tf.sign(jacobian)
         xT = clip_tf(xT, x_nat - eps, x_nat + eps)
 
         # if just one channel, then lb and ub are just numbers
@@ -91,7 +125,6 @@ def pgd_tf(model, x_nat, x, y, eps, lr, gradSteps):
         x = xT
 
     prediction = model(x)
-    # loss = tf.reduce_sum(- tf.reduce_sum(prediction * input_label, axis=1) + tf.math.log(tf.reduce_sum(tf.exp(prediction), axis=1)))
     if model.layers[-1].activation.__name__ == "linear":
         prediction2 = tf.nn.softmax(prediction)
     else:
