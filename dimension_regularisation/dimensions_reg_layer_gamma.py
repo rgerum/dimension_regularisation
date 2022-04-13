@@ -47,18 +47,22 @@ class DimensionRegGammaWeights(keras.layers.Layer):
     def call(self, x):
         if x.shape[0] == None:
             return x
-        x2 = flatten(x)
-        if x2.shape[1] > 10000:
-            x2 = tf.gather(x2, tf.random.uniform(shape=[10000], maxval=x2.shape[1], dtype=tf.int32, seed=10), axis=1)
-
-        loss = get_alpha_regularizer(x2, self.target_value) * self.strength
-        self.add_loss(loss)
-        self.add_metric(loss, self.metric_name+"_loss")
 
         if self.calc_alpha:
+            x2 = flatten(x)
+            if x2.shape[1] > 10000:
+                x2 = tf.gather(x2, tf.random.uniform(shape=[10000], maxval=x2.shape[1], dtype=tf.int32, seed=10), axis=1)
+
+            loss = get_alpha_regularizer(x2, self.target_value) * self.strength
+
             alpha = get_alpha(x2)
         else:
+            loss = 0
             alpha = 0
+
+        self.add_loss(loss)
+        self.add_metric(loss, self.metric_name + "_loss")
+
         # record it as a metric
         self.add_metric(alpha, self.metric_name)
 
