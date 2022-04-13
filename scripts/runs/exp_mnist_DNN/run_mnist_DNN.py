@@ -37,8 +37,8 @@ else:
 
         keras.layers.Flatten(),
         keras.layers.Dense(units=p.dense1(2000), activation='tanh'),
-        #DimensionRegGammaWeights(p.reg1(1.), p.reg1value(1)),
-        DimensionRegGammaWeightsPreComputedBase(p.reg1(1.), p.reg1value(1.)),
+        DimensionRegGammaWeights(p.reg1(1.), p.reg1value(1)),
+        #DimensionRegGammaWeightsPreComputedBase(p.reg1(1.), p.reg1value(1.)),
         tf.keras.layers.Dense(units=num_classes, activation='softmax'),
     ])
     model.compile(optimizer=tf.keras.optimizers.Adam(1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
