@@ -198,24 +198,31 @@ def getCommandLineArgs():
     return data
 
 
-def getOutputPath(args):
+def getOutputPath(func, locals):
+    import inspect
+    kwargs = {x: locals[x] for x in inspect.signature(func).parameters}
+
     from datetime import datetime
     parts = [
         datetime.now().strftime("%Y%m%d-%H%M%S"),
         getGitHash(),
     ]
-    parts.extend([str(k) + "=" + str(v) for k, v in args._get_kwargs() if k != "output"])
-    print("parts", parts)
-    output = Path(args.output("logs/tmp300"))# / (" ".join(parts))
+    parts.extend([str(k) + "=" + str(v) for k, v in kwargs.items() if k != "output"])
+
+    output = Path(kwargs['output'])# / (" ".join(parts))
     import yaml
     output.mkdir(parents=True, exist_ok=True)
     arguments = dict(datetime=parts[0], commit=parts[1], commitLong=getGitLongHash(), run_dir=os.getcwd())
-    arguments.update(args._get_kwargs())
+    arguments.update(kwargs)
     print("arguments", arguments)
 
     with open(output / "arguments.yaml", "w") as fp:
         yaml.dump(arguments, fp)
     print("OUTPUT_PATH=\""+str(output)+"\"")
+
+    import shutil
+    shutil.copy(inspect.getfile(func), output)
+
     return output
 
 
