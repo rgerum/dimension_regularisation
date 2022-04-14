@@ -13,6 +13,7 @@ from dimension_regularisation.dim_includes import command_line_parameters as p
 
 def main(dataset="mnist", dense1=2000,
          reg_strength=1., reg_target=1.,
+         gamma=False,
          output="logs/tmp600__"):
 
     # Setup train and test splits
