@@ -42,9 +42,10 @@ def main(dataset="mnist", dense1=2000,
 
             keras.layers.Flatten(),
             keras.layers.Dense(units=dense1, activation='tanh'),
-            DimensionReg(reg_strength, reg_target),
+            #DimensionReg(reg_strength, reg_target),
             #DimensionRegGammaWeights(reg_strength, reg_target),
-            #DimensionRegGammaWeightsPreComputedBase(reg_strength, reg_target),
+            DimensionReg(reg_strength, reg_target) if gamma is False else
+            DimensionRegGammaWeightsPreComputedBase(reg_strength, reg_target),
             tf.keras.layers.Dense(units=num_classes, activation='softmax'),
         ])
         model.compile(optimizer=tf.keras.optimizers.Adam(1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
