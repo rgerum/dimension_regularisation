@@ -11,10 +11,16 @@ from dimension_regularisation.robustness import get_robustness_metrics
 from dimension_regularisation.attack_tf import get_attack_metrics
 from dimension_regularisation.dim_includes import command_line_parameters as p
 
+
 def main(dataset="mnist", dense1=2000,
          reg_strength=1., reg_target=1.,
          gamma=False,
+         iter=0,
          output="logs/tmp600__"):
+
+    # set the seed depending on the iteration
+    tf.random.set_seed(iter*1234+1234)
+    np.random.seed(iter*1234+1234)
 
     # Setup train and test splits
     (x_train, y_train), (x_test, y_test) = getattr(keras.datasets, dataset).load_data()
@@ -51,9 +57,6 @@ def main(dataset="mnist", dense1=2000,
         model.compile(optimizer=tf.keras.optimizers.Adam(1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
         model.summary()
 
-    #print(get_attack_metrics("mnist", np.arange(0, 0.2, 0.01))(model))
-    #exit()
-    #int(2000*1.5)
     print(x_train.shape, x_test.shape)
     # earlyStopping
     history = model.fit(x_train, y_train, batch_size=2500, epochs=50, validation_data=(x_test, y_test),
