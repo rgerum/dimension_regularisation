@@ -12,5 +12,6 @@ setup(name='dimension_regularisation',
           'scipy',
           'tensorflow',
           'pandas',
+          'fire',
       ],
-)
+      )
