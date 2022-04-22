@@ -21,7 +21,10 @@ class TimeIt:
         print("TimeIt", self.name, time.time()-self.t, "s")
 
 def get_attack_metrics(dataset, strengths):
-    (x_train, y_train), (x_test, y_test) = getattr(tf.keras.datasets, dataset).load_data()
+    if isinstance(dataset, str):
+        (x_train, y_train), (x_test, y_test) = getattr(tf.keras.datasets, dataset).load_data()
+    else:
+        x_test, y_test = dataset
 
     def attack(model):
         for layer in model.layers:
