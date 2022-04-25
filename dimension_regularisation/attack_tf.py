@@ -23,6 +23,7 @@ class TimeIt:
 def get_attack_metrics(dataset, strengths):
     if isinstance(dataset, str):
         (x_train, y_train), (x_test, y_test) = getattr(tf.keras.datasets, dataset).load_data()
+        y_test = y_test[:, 0]
     else:
         x_test, y_test = dataset
 
