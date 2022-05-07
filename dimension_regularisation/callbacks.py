@@ -95,14 +95,20 @@ class SaveHistory(keras.callbacks.Callback):
         self.logs_history = self.start_data["data"]
         return self.start_data["model"], self.start_data["initial_epoch"]
 
+    def on_train_begin(self, logs={}):
+        self.on_epoch_end(-1, logs)
+
     def on_epoch_end(self, epoch, logs={}):
         # add epoch and time to the logs
         logs["epoch"] = epoch
         logs["time"] = time.time()
+        import numpy as np
+        logs["mean_weight"] = np.mean([np.mean(w) for w in self.model.weights[0].numpy()])
         # maybe add additional metrics
         if self.additional_logs_callback is not None:
             for func in self.additional_logs_callback:
-                logs.update(func(self.model))
+                if func is not None:
+                    logs.update(func(self.model))
         # store the logs
         self.logs_history.append(logs)
 
@@ -115,7 +121,7 @@ class SaveHistory(keras.callbacks.Callback):
         self.model.save(self.filename_model)
 
         # if we found something better than the previous "best"
-        if logs["val_accuracy"] > self.best_val_acc:
+        if "val_accuracy" in logs and logs["val_accuracy"] > self.best_val_acc:
             self.best_val_acc = logs["val_accuracy"]
             Path(self.filename_model_best).mkdir(parents=True, exist_ok=True)
             self.model.save(self.filename_model_best)
@@ -131,3 +137,17 @@ class SlurmJobSubmitterStatus(keras.callbacks.Callback):
             set_job_status(dict(epoch=epoch))
         except ModuleNotFoundError:
             pass
+
+class GetSpektrumCallback(keras.callbacks.Callback):
+    def __init__(self, output, model2, x_test):
+        output = Path(output)
+        output.mkdir(parents=True, exist_ok=True)
+        self.output = output
+        self.model2 = model2
+        self.x_test = x_test
+
+    def on_epoch_end(self, epoch, logs={}):
+        y = self.model2(self.x_test)
+        print(y)
+        import numpy as np
+        np.save(self.output / f"epoch_{epoch}", np.asarray(y))

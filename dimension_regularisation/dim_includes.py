@@ -134,6 +134,20 @@ def PCAreduce(x_train, x_test, pca_dims):
     return x_train, x_test
 
 
+def PCAreduce2(x_train, x_test, pca_dims):
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components=pca_dims)
+    pca.fit(x_train.reshape(x_train.shape[0], -1))
+    def trans(x):
+        x2 = pca.transform(x.reshape(x.shape[0], -1))
+        x2 = pca.inverse_transform(x2)
+        x2 = x2.reshape(x.shape)
+        return x2
+    x_train = trans(x_train)
+    x_test = trans(x_test)
+    return x_train, x_test
+
+
 
 
 class GetAlphaLayer(keras.layers.Layer):

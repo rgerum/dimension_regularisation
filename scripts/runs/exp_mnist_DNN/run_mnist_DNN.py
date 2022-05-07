@@ -9,13 +9,16 @@ from dimension_regularisation.dimensions_reg_layer_gamma import DimensionRegGamm
 from dimension_regularisation.callbacks import SaveHistory, SlurmJobSubmitterStatus
 from dimension_regularisation.robustness import get_robustness_metrics
 from dimension_regularisation.attack_tf import get_attack_metrics
-from dimension_regularisation.dim_includes import command_line_parameters as p
+from dimension_regularisation.dim_includes import command_line_parameters as p, PCAreduce2
 
 
 def main(dataset="mnist", dense1=2000,
          reg_strength=1., reg_target=1.,
          gamma=False,
          iter=0,
+         class_count=None,
+         pca_dim=None,
+         epochs=50,
          output="logs/tmp600__"):
 
     # set the seed depending on the iteration
@@ -27,6 +30,19 @@ def main(dataset="mnist", dense1=2000,
     x_train = x_train.astype(np.float32)/255
     x_test = x_test.astype(np.float32)/255
 
+    # optionally reduce number of classes
+    if class_count is not None:
+        index = (y_train <= class_count)
+        index2 = (y_test <= class_count)
+
+        x_train = x_train[index]
+        y_train = y_train[index]
+        x_test = x_test[index2]
+        y_test = y_test[index2]
+
+    if pca_dim is not None:
+        x_train, x_test = PCAreduce2(x_train, x_test, pca_dim)
+
     # get the number of classes
     num_classes = np.max(y_test)+1
     # convert
@@ -37,7 +53,7 @@ def main(dataset="mnist", dense1=2000,
     earlyStopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')
 
     #get_robustness_metrics
-    cb = SaveHistory(getOutputPath(main, locals()), additional_logs_callback=[get_attack_metrics("mnist", np.arange(0, 0.2, 0.01))])
+    cb = SaveHistory(getOutputPath(main, locals()), additional_logs_callback=[get_attack_metrics((x_test, y_test), np.arange(0, 0.2, 0.01))])
     if cb.started() and 0:
         model, initial_epoch = cb.load()
     else:
@@ -59,7 +75,7 @@ def main(dataset="mnist", dense1=2000,
 
     print(x_train.shape, x_test.shape)
     # earlyStopping
-    history = model.fit(x_train, y_train, batch_size=2500, epochs=50, validation_data=(x_test, y_test),
+    history = model.fit(x_train, y_train, batch_size=2500, epochs=epochs, validation_data=(x_test, y_test),
                         initial_epoch=initial_epoch,
                         callbacks=[cb, CalcEigenVectors(x_train)]
     )
