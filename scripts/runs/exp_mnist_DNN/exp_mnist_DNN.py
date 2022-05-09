@@ -16,9 +16,9 @@ for i in range(3):
             #vs = [2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0]
             vs = np.arange(0.6, 4.1, 0.2)
             for reg1value in vs:
-                for pca in np.arange(2, 11, 1):
-                    reg = strength
-                    data.append(dict(iter=i, gamma=gamma, class_count=pca, pca_dim=pca, reg_strength=strength, reg_target=reg1value, output=f"../../../results/expcifar5_DNN_extened_range_pca_classes/iter-{i}_gamma-{gamma}_pca{pca}_reg1-{strength}_reg1value-{reg1value}"))
+                reg = strength
+                data.append(dict(iter=i, gamma=gamma, dataset="cifar10", reg_strength=strength, reg_target=reg1value,
+                                 output=f"../../../results/expcifar5_DNN_extened_range_cifar10/iter-{i}_dataset-cifar10_gamma-{gamma}_reg1-{strength}_reg1value-{reg1value}"))
 data = pd.DataFrame(data)
 print(data)
 data.to_csv("jobs.csv")
