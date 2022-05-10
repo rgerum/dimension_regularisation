@@ -13,5 +13,7 @@ setup(name='dimension_regularisation',
           'tensorflow',
           'pandas',
           'fire',
+          'tensorflow_datasets',
+          'scikit-learn',
       ],
       )
