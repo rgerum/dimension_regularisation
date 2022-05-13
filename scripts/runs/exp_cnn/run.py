@@ -18,7 +18,7 @@ def main(dataset="mnist", dense1=1000,
          iter=0,
          class_count=None,
          pca_dim=None,
-         epochs=50,
+         epochs=200,
          output="logs/tmp600__"):
 
     # set the seed depending on the iteration
@@ -29,6 +29,10 @@ def main(dataset="mnist", dense1=1000,
     (x_train, y_train), (x_test, y_test) = getattr(keras.datasets, dataset).load_data()
     x_train = x_train.astype(np.float32)/255
     x_test = x_test.astype(np.float32)/255
+
+    # for cifar10 we need to squeeze (Nx1) for mnist it is already (N)
+    y_train = np.squeeze(y_train)
+    y_test = np.squeeze(y_test)
 
     if len(x_train.shape) == 3:
         x_train = x_train[..., None]
@@ -85,7 +89,7 @@ def main(dataset="mnist", dense1=1000,
     # earlyStopping
     history = model.fit(x_train, y_train, batch_size=6000, epochs=epochs, validation_data=(x_test, y_test),
                         initial_epoch=initial_epoch,
-                        callbacks=[cb, CalcEigenVectors(x_train)]
+                        callbacks=[cb] # CalcEigenVectors(x_train)
     )
 
 
