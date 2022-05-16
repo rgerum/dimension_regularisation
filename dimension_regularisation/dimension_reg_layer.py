@@ -4,7 +4,7 @@ from .pca_variance import flatten, get_pca_variance, linear_fit
 
 
 @tf.function
-def get_alpha(data, min_x=5, max_x=1000):
+def get_alpha(data, min_x=5, max_x=50):
     """ get the power law exponent of the PCA value distribution """
     # flatten the non-batch dimensions
     data = flatten(data)

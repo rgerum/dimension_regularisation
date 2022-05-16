@@ -18,7 +18,7 @@ def main(dataset="mnist", dense1=1000,
          iter=0,
          class_count=None,
          pca_dim=None,
-         epochs=50,
+         epochs=200,
          output="logs/tmp600__"):
 
     # set the seed depending on the iteration
